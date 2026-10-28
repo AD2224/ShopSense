@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="market-hero">
+  <div class="container py-5">
+    <div class="row align-items-center g-4">
+      <div class="col-lg-7">
+        <div class="eyebrow">AI-POWERED SHOPPING EXPERIENCE</div>
+        <h1>Shop products.<br><span>Understand customers.</span></h1>
+        <p class="lead">A modern e-commerce demo where every product has star ratings and AI customer emotion ratings.</p>
+        <div class="d-flex gap-2 flex-wrap">
+          <a href="#products" class="btn btn-warning btn-lg fw-bold">Explore products</a>
+          {% if not session.get('user_id') %}<a href="/signup" class="btn btn-outline-light btn-lg">Join free</a>{% endif %}
+        </div>
+      </div>
+      <div class="col-lg-5">
+        <div class="ai-card">
+          <div class="ai-icon">🤖</div><h3>Customer Emotion AI</h3>
+          <p>Analyze reviews as <b>Positive 😊</b>, <b>Neutral 😐</b> or <b>Negative 😞</b> and see the confidence score.</p>
+          <div class="emotion-mini"><span>😊 Positive</span><b>78%</b></div><div class="progress"><div class="progress-bar bg-success" style="width:78%"></div></div>
+          <div class="emotion-mini"><span>😐 Neutral</span><b>14%</b></div><div class="progress"><div class="progress-bar bg-warning" style="width:14%"></div></div>
+          <div class="emotion-mini"><span>😞 Negative</span><b>8%</b></div><div class="progress"><div class="progress-bar bg-danger" style="width:8%"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="container py-4">
+  <div class="category-strip">
+    <a class="category-pill {% if not selected_category %}active{% endif %}" href="/shop">All</a>
+    {% for c in categories %}<a class="category-pill {% if selected_category == c %}active{% endif %}" href="/shop?category={{ c }}">{{ c }}</a>{% endfor %}
+  </div>
+</section>
+<section class="container pb-5" id="products">
+  <div class="d-flex justify-content-between align-items-end mb-4"><div><div class="eyebrow dark">RECOMMENDED FOR YOU</div><h2 class="section-title">Popular products</h2></div><span class="text-muted">{{ products|length }} products</span></div>
+  <div class="row g-4">
+    {% for p in products %}
+    <div class="col-sm-6 col-lg-3">
+      <div class="product-card">
+        <div class="product-visual"><span class="tag">{{ p.tag }}</span>{% if p.image %}<img class="product-image" src="{{ p.image }}" alt="{{ p.name }}" loading="lazy">{% else %}<div class="product-emoji">{{ p.icon }}</div>{% endif %}</div>
+        <div class="p-3 product-card-body">
+          <small class="text-muted">{{ p.category }}</small><h5 class="product-name">{{ p.name }}</h5>
+          <div class="product-meta"><b>Brand:</b> {{ p.brand }} <span>•</span> <b>Model:</b> {{ p.model }}</div>
+          <div class="color-options">
+            <span class="color-label">Colors:</span>
+            {% for color in p.colors %}
+            <a class="color-swatch-link" href="/product/{{ p.id }}?color={{ color.name|urlencode }}" title="Choose {{ color.name }}">
+              <span class="color-swatch" style="background:{{ color.hex }}"></span>
+            </a>
+            {% endfor %}
+          </div>
+          <div class="stars">★★★★★ <span>{{ p.rating }}</span></div>
+          <small class="text-muted">{{ p.reviews }} ratings</small>
+          <p class="product-desc">{{ p.description }}</p>
+          <div><div class="price">₹{{ '{:,}'.format(p.price) }}</div><div class="emotion-line"><span>😊 Customer emotion</span><b>{{ DEMO_EMOTIONS[p.id].positive if DEMO_EMOTIONS is defined else '—' }}% positive</b></div>
+          <div class="shop-actions mt-3">
+            <form action="/like/{{ p.id }}" method="POST" class="flex-grow-1"><input type="hidden" name="color" value="{{ p.colors[0].name if p.colors else 'Default' }}"><button class="btn btn-outline-danger w-100" type="submit">{{ '❤️ Liked' if p.id in liked_products else '♡ Like' }}</button></form>
+            <form action="/cart/add/{{ p.id }}" method="POST" class="flex-grow-1"><input type="hidden" name="color" value="{{ p.colors[0].name if p.colors else 'Default' }}"><button class="btn btn-warning w-100 fw-bold" type="submit">🛒 Add to Cart</button></form>
+          </div>
+          <a href="/product/{{ p.id }}" class="btn btn-dark w-100 mt-2">View product</a>
+          <a href="/product/{{ p.id }}" class="btn btn-success w-100 mt-2">⚡ Purchase</a></div>
+        </div>
+      </div>
+    </div>
+    {% else %}<div class="col-12"><div class="empty-state">No products found. Try another search.</div></div>{% endfor %}
+  </div>
+</section>
+{% endblock %}

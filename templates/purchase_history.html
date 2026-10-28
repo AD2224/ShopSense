@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-5">
+  <div class="d-flex justify-content-between align-items-end mb-4">
+    <div><div class="eyebrow dark">YOUR SHOPPING ACTIVITY</div><h1 class="fw-bold">📦 Purchase History</h1><p class="text-muted mb-0">Every confirmed purchase is stored here in your account.</p></div>
+    <a href="/shop" class="btn btn-warning fw-bold">Continue Shopping</a>
+  </div>
+  {% if orders %}
+    <div class="row g-3">
+    {% for order in orders %}
+      <div class="col-12"><div class="history-card">
+        <div class="history-icon">{{ ({1:'🎧',2:'📱',3:'⌨️',4:'⌚',5:'🔊',6:'🖥️',7:'🖱️',8:'💡'}).get(order.product_id, '📦') }}</div>
+        <div class="flex-grow-1"><div class="d-flex justify-content-between gap-3 flex-wrap"><h5 class="fw-bold mb-1">{{ order.product }}</h5><span class="badge bg-success align-self-start">{{ order.status }}</span></div>
+        <div class="text-muted">Order #{{ order.id }} · Quantity: {{ order.quantity }} · {{ order.purchased_at }}</div>{% if order.selected_color %}<div class="cart-color mt-1"><b>Purchased color:</b> {{ order.selected_color }}</div>{% endif %}{% if order.selected_color %}<div class="cart-color mt-1"><b>Purchased color:</b> {{ order.selected_color }}</div>{% endif %}
+        <div class="mt-2 fw-bold">Paid: ₹{{ '{:,.2f}'.format(order.amount) }}</div>
+        {% if order.discount_amount %}<div class="small text-success">Rewards discount: −₹{{ '{:,.2f}'.format(order.discount_amount) }}</div>{% endif %}
+        {% if order.points_earned %}<div class="small text-primary">🎁 Points earned: {{ order.points_earned }}</div>{% endif %}
+        {% if order.points_redeemed %}<div class="small text-muted">Points redeemed: {{ order.points_redeemed }}</div>{% endif %}</div>
+        <div><a href="/product/{{ order.product_id }}" class="btn btn-outline-dark">View Product</a></div>
+      </div></div>
+    {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state"><div style="font-size:60px">📦</div><h3>No purchases yet</h3><p class="text-muted">Your confirmed orders will appear here.</p><a href="/shop" class="btn btn-warning fw-bold">Start Shopping</a></div>
+  {% endif %}
+</div>
+{% endblock %}

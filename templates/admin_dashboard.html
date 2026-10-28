@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container-fluid px-lg-4 py-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+      <h1 class="fw-bold mb-1">👨‍💼 ShopSense Admin Control Center</h1>
+      <p class="text-muted mb-0">Customers, orders, reviews, ratings, AI sentiment, products and rewards — all in one place.</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="{{ url_for('analytics_center') }}" class="btn btn-primary">📊 Analytics Center</a>
+      <a href="{{ url_for('admin_profile') }}" class="btn btn-outline-dark">🛡️ Admin Profile</a>
+      <a href="{{ url_for('admin_export_customers') }}" class="btn btn-outline-primary">⬇ Customers CSV</a>
+      <a href="{{ url_for('admin_export_reviews') }}" class="btn btn-outline-success">⬇ Reviews CSV</a>
+      <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+    </div>
+  </div>
+
+  <form method="GET" action="{{ url_for('admin_dashboard') }}" class="card shadow-sm border-0 mb-4">
+    <div class="card-body">
+      <div class="row g-2 align-items-end">
+        <div class="col-lg-5">
+          <label class="form-label fw-semibold">🔎 Global admin search</label>
+          <input class="form-control" name="search" value="{{ search }}" placeholder="Customer, email, product, review, order or color...">
+        </div>
+        <div class="col-sm-4 col-lg-2">
+          <label class="form-label fw-semibold">Sentiment</label>
+          <select name="sentiment" class="form-select">
+            <option value="">All</option>
+            <option value="positive" {% if review_sentiment=='positive' %}selected{% endif %}>Positive</option>
+            <option value="neutral" {% if review_sentiment=='neutral' %}selected{% endif %}>Neutral</option>
+            <option value="negative" {% if review_sentiment=='negative' %}selected{% endif %}>Negative</option>
+          </select>
+        </div>
+        <div class="col-sm-4 col-lg-2">
+          <label class="form-label fw-semibold">Rating</label>
+          <select name="rating" class="form-select">
+            <option value="">All</option>
+            {% for n in [5,4,3,2,1] %}<option value="{{ n }}" {% if rating_filter==n|string %}selected{% endif %}>{{ n }} ★</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-sm-4 col-lg-2">
+          <label class="form-label fw-semibold">Product</label>
+          <select name="product" class="form-select">
+            <option value="">All products</option>
+            {% for p in products %}<option value="{{ p.name }}" {% if product_filter==p.name %}selected{% endif %}>{{ p.name }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-lg-1 d-grid"><button class="btn btn-dark">Search</button></div>
+      </div>
+      {% if search or review_sentiment or rating_filter or product_filter %}<div class="mt-2"><a href="{{ url_for('admin_dashboard') }}" class="small">Clear all filters</a></div>{% endif %}
+    </div>
+  </form>
+
+  <div class="row g-3 mb-4">
+    {% for label, value, icon in [
+      ('Customers', total_users, '👥'), ('Reviews', total_reviews, '📝'), ('Orders', total_orders, '📦'),
+      ('Revenue', '₹%.2f'|format(total_revenue), '💰'), ('Average Rating', '%.2f / 5'|format(avg_rating), '⭐'),
+      ('Items Sold', total_items_sold, '🛍️'), ('Wishlist Saves', total_wishlist, '❤️'), ('Reward Points', total_reward_points, '🎁')
+    ] %}
+    <div class="col-6 col-md-3 col-xl-1-5" style="flex:0 0 auto;width:12.5%">
+      <div class="card shadow-sm border-0 h-100"><div class="card-body">
+        <div class="small text-muted">{{ icon }} {{ label }}</div><div class="fs-4 fw-bold mt-2">{{ value }}</div>
+      </div></div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="row g-4 mb-4">
+    <div class="col-lg-4"><div class="card shadow-sm border-0 h-100"><div class="card-body"><h5 class="fw-bold">🤖 Sentiment Distribution</h5><canvas id="sentimentChart"></canvas></div></div></div>
+    <div class="col-lg-4"><div class="card shadow-sm border-0 h-100"><div class="card-body"><h5 class="fw-bold">⭐ Rating Distribution</h5><canvas id="ratingChart"></canvas></div></div></div>
+    <div class="col-lg-4"><div class="card shadow-sm border-0 h-100"><div class="card-body"><h5 class="fw-bold">📈 Sales / Revenue Trend</h5><canvas id="salesChart"></canvas></div></div></div>
+  </div>
+
+  <div class="card shadow-sm border-0 mb-4">
+    <div class="card-body"><h4 class="fw-bold">👥 Customer Details</h4><div class="table-responsive">
+      <table class="table table-hover align-middle"><thead class="table-dark"><tr><th>Name</th><th>Email</th><th>Joined</th><th>Orders</th><th>Spent</th><th>Reviews</th><th>Rewards</th></tr></thead><tbody>
+      {% for c in customers %}<tr><td class="fw-semibold">{{ c.name }}</td><td>{{ c.email }}</td><td>{{ c.created_at }}</td><td>{{ c.order_count }}</td><td>₹{{ '%.2f'|format(c.total_spent) }}</td><td>{{ c.review_count }}</td><td>{{ c.reward_points }}</td></tr>
+      {% else %}<tr><td colspan="7" class="text-center text-muted">No customers found.</td></tr>{% endfor %}
+      </tbody></table></div></div>
+  </div>
+
+  <div class="card shadow-sm border-0 mb-4">
+    <div class="card-body"><div class="d-flex justify-content-between align-items-center"><h4 class="fw-bold">📝 Reviews & Comments</h4><span class="badge bg-secondary">{{ all_reviews|length }} shown</span></div><div class="table-responsive mt-3">
+      <table class="table table-hover align-middle"><thead class="table-dark"><tr><th>Customer</th><th>Product</th><th>Rating</th><th>Comment</th><th>AI Sentiment</th><th>Confidence</th><th>Date</th><th></th></tr></thead><tbody>
+      {% for r in all_reviews %}<tr><td>{{ r.name }}<br><small class="text-muted">{{ r.email }}</small></td><td>{{ r.product }}</td><td>{{ '★' * (r.rating|int) }}<br><small>{{ r.rating }}/5</small></td><td style="min-width:240px;max-width:420px">{{ r.review }}</td><td>{% if r.sentiment=='positive' %}<span class="badge bg-success">Positive</span>{% elif r.sentiment=='negative' %}<span class="badge bg-danger">Negative</span>{% else %}<span class="badge bg-warning text-dark">Neutral</span>{% endif %}</td><td>{{ '%.2f'|format(r.confidence or 0) }}%</td><td>{{ r.created_at }}</td><td><form method="POST" action="{{ url_for('admin_delete_review', review_id=r.id) }}" onsubmit="return confirm('Delete this review?');"><button class="btn btn-sm btn-outline-danger">Delete</button></form></td></tr>
+      {% else %}<tr><td colspan="8" class="text-center text-muted">No reviews found.</td></tr>{% endfor %}
+      </tbody></table></div></div>
+  </div>
+
+  <div class="card shadow-sm border-0 mb-4">
+    <div class="card-body"><h4 class="fw-bold">📦 Orders / Purchases</h4><div class="table-responsive">
+      <table class="table table-hover align-middle"><thead class="table-dark"><tr><th>Customer</th><th>Product</th><th>Color</th><th>Qty</th><th>Amount</th><th>Status</th><th>Discount</th><th>Points</th><th>Date</th></tr></thead><tbody>
+      {% for o in orders %}<tr><td>{{ o.name }}<br><small>{{ o.email }}</small></td><td>{{ o.product }}</td><td><span class="badge text-bg-light border">{{ o.selected_color or 'Default' }}</span></td><td>{{ o.quantity }}</td><td>₹{{ '%.2f'|format(o.amount) }}</td><td>{{ o.status }}</td><td>₹{{ '%.2f'|format(o.discount_amount) }}</td><td>+{{ o.points_earned }} / -{{ o.points_redeemed }}</td><td>{{ o.purchased_at }}</td></tr>
+      {% else %}<tr><td colspan="9" class="text-center text-muted">No orders found.</td></tr>{% endfor %}
+      </tbody></table></div></div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <div class="col-lg-7"><div class="card shadow-sm border-0 h-100"><div class="card-body"><h4 class="fw-bold">🛍️ Product Analytics</h4><div class="table-responsive"><table class="table align-middle"><thead class="table-light"><tr><th>Product</th><th>Reviews</th><th>Avg ★</th><th>Positive</th><th>Neutral</th><th>Negative</th></tr></thead><tbody>{% for p in product_analytics %}<tr><td>{{ p.product }}</td><td>{{ p.review_count }}</td><td>{{ '%.2f'|format(p.avg_rating) }}</td><td class="text-success">{{ p.positive }}</td><td class="text-warning">{{ p.neutral }}</td><td class="text-danger">{{ p.negative }}</td></tr>{% else %}<tr><td colspan="6">No product review data.</td></tr>{% endfor %}</tbody></table></div></div></div></div>
+    <div class="col-lg-5"><div class="card shadow-sm border-0 h-100"><div class="card-body"><h4 class="fw-bold">🏆 Top Products by Sales</h4><div class="table-responsive"><table class="table align-middle"><thead class="table-light"><tr><th>Product</th><th>Units</th><th>Revenue</th></tr></thead><tbody>{% for p in top_products %}<tr><td>{{ p.product }}</td><td>{{ p.units }}</td><td>₹{{ '%.2f'|format(p.revenue) }}</td></tr>{% else %}<tr><td colspan="3">No sales yet.</td></tr>{% endfor %}</tbody></table></div></div></div></div>
+  </div>
+
+  <div class="card shadow-sm border-0 mb-4"><div class="card-body"><h4 class="fw-bold">🎁 Reward Activity</h4><div class="table-responsive"><table class="table align-middle"><thead class="table-light"><tr><th>Customer</th><th>Points Change</th><th>Reason</th><th>Date</th></tr></thead><tbody>{% for t in reward_transactions %}<tr><td>{{ t.name }}<br><small>{{ t.email }}</small></td><td class="{% if t.points_change >= 0 %}text-success{% else %}text-danger{% endif %}">{{ '%+d'|format(t.points_change) }}</td><td>{{ t.reason }}</td><td>{{ t.created_at }}</td></tr>{% else %}<tr><td colspan="4" class="text-center text-muted">No reward activity.</td></tr>{% endfor %}</tbody></table></div></div></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const sentimentData={{ sentiment_data|tojson }};
+const ratingData={{ rating_data|tojson }};
+const salesData={{ sales_trend|tojson }};
+function makeChart(id,type,labels,data,label){const el=document.getElementById(id);if(!el)return;new Chart(el,{type,data:{labels,datasets:[{label,data,borderWidth:2,fill:type==='line'}]},options:{responsive:true,plugins:{legend:{position:'bottom'}}}})}
+makeChart('sentimentChart','doughnut',sentimentData.map(x=>x.sentiment),sentimentData.map(x=>x.count),'Reviews');
+makeChart('ratingChart','bar',ratingData.map(x=>x.rating+' ★'),ratingData.map(x=>x.count),'Ratings');
+makeChart('salesChart','line',salesData.map(x=>x.day),salesData.map(x=>x.revenue),'Revenue (₹)');
+</script>
+{% endblock %}

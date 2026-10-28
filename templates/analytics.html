@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container-fluid px-lg-4 py-4">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+    <div><h1 class="fw-bold">📊 ShopSense Analytics Center</h1><p class="text-muted mb-0">Excel + SQL + Statistics + Tableau-ready business analytics.</p></div>
+    <div class="d-flex gap-2"><a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-dark">← Admin</a><a href="{{ url_for('export_analytics') }}" class="btn btn-success">⬇ Download Analytics CSV</a></div>
+  </div>
+  <div class="row g-3 mb-4">
+    {% for label,value,icon in [('Customers',customers,'👥'),('Orders',orders,'📦'),('Revenue','₹%.2f'|format(revenue),'💰'),('Avg Order','₹%.2f'|format(avg_order),'🧾'),('Avg Rating','%.2f / 5'|format(avg_rating),'⭐'),('Outliers',stats.outliers,'⚠️')] %}
+    <div class="col-6 col-md-4 col-xl-2"><div class="card shadow-sm border-0 h-100"><div class="card-body"><div class="text-muted small">{{icon}} {{label}}</div><div class="fs-4 fw-bold mt-2">{{value}}</div></div></div></div>
+    {% endfor %}
+  </div>
+  <div class="row g-4 mb-4">
+    <div class="col-lg-7"><div class="card shadow-sm border-0"><div class="card-body"><h5 class="fw-bold">📈 Sales Trend</h5><canvas id="sales"></canvas></div></div></div>
+    <div class="col-lg-5"><div class="card shadow-sm border-0"><div class="card-body"><h5 class="fw-bold">😊 Sentiment Distribution</h5><canvas id="sentiment"></canvas></div></div></div>
+  </div>
+  <div class="row g-4 mb-4">
+    <div class="col-lg-6"><div class="card shadow-sm border-0"><div class="card-body"><h5 class="fw-bold">⭐ Rating Distribution</h5><canvas id="rating"></canvas></div></div></div>
+    <div class="col-lg-6"><div class="card shadow-sm border-0"><div class="card-body"><h5 class="fw-bold">🏆 Product Revenue</h5><canvas id="products"></canvas></div></div></div>
+  </div>
+  <div class="card shadow-sm border-0 mb-4"><div class="card-body"><h4 class="fw-bold">📐 Data Distribution & Outlier Analysis</h4><div class="row g-3"><div class="col-md-3"><b>Minimum</b><br>₹{{'%.2f'|format(stats.min_value)}}</div><div class="col-md-3"><b>Mean</b><br>₹{{'%.2f'|format(stats.mean_value)}}</div><div class="col-md-3"><b>Q1 / Q3</b><br>₹{{'%.2f'|format(stats.q1)}} / ₹{{'%.2f'|format(stats.q3)}}</div><div class="col-md-3"><b>Upper Outlier Limit</b><br>₹{{'%.2f'|format(stats.upper)}}</div></div><p class="text-muted mt-3 mb-0">Outliers use the standard IQR rule: values below Q1 − 1.5×IQR or above Q3 + 1.5×IQR. Use extreme transactions for business investigation rather than automatically deleting them.</p></div></div>
+  <div class="card shadow-sm border-0 mb-4"><div class="card-body"><h4 class="fw-bold">🛍️ Product Performance</h4><div class="table-responsive"><table class="table table-hover"><thead class="table-dark"><tr><th>Rank</th><th>Product</th><th>Orders</th><th>Units</th><th>Revenue</th><th>Avg Order</th></tr></thead><tbody>{% for p in product_sales %}<tr><td>{{loop.index}}</td><td>{{p.product}}</td><td>{{p.orders}}</td><td>{{p.units}}</td><td>₹{{'%.2f'|format(p.revenue)}}</td><td>₹{{'%.2f'|format(p.avg_order)}}</td></tr>{% else %}<tr><td colspan="6" class="text-center">No purchase data yet.</td></tr>{% endfor %}</tbody></table></div></div></div>
+  <div class="card shadow-sm border-0 mb-4"><div class="card-body"><h4 class="fw-bold">👥 Customer Analytics</h4><div class="table-responsive"><table class="table table-hover"><thead class="table-dark"><tr><th>Rank</th><th>Customer</th><th>Email</th><th>Orders</th><th>Total Spent</th><th>Avg Order</th></tr></thead><tbody>{% for c in customer_analytics %}<tr><td>{{loop.index}}</td><td>{{c.name}}</td><td>{{c.email}}</td><td>{{c.orders}}</td><td>₹{{'%.2f'|format(c.spent)}}</td><td>₹{{'%.2f'|format(c.avg_order)}}</td></tr>{% endfor %}</tbody></table></div></div></div>
+  <div class="card shadow-sm border-0 mb-4"><div class="card-body"><h4 class="fw-bold">🤖 Product Review & Sentiment Analysis</h4><div class="table-responsive"><table class="table table-hover"><thead class="table-dark"><tr><th>Product</th><th>Reviews</th><th>Avg Rating</th><th>Positive</th><th>Neutral</th><th>Negative</th></tr></thead><tbody>{% for r in review_analytics %}<tr><td>{{r.product}}</td><td>{{r.reviews}}</td><td>{{'%.2f'|format(r.avg_rating)}}</td><td class="text-success">{{r.positive}}</td><td class="text-warning">{{r.neutral}}</td><td class="text-danger">{{r.negative}}</td></tr>{% endfor %}</tbody></table></div></div></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script>
+const sales={{daily_sales|tojson}}, sent={{sentiment_distribution|tojson}}, ratings={{rating_distribution|tojson}}, products={{product_sales|tojson}};
+new Chart(document.getElementById('sales'),{type:'line',data:{labels:sales.map(x=>x.period),datasets:[{label:'Revenue ₹',data:sales.map(x=>x.revenue),borderWidth:2}]},options:{responsive:true}});
+new Chart(document.getElementById('sentiment'),{type:'doughnut',data:{labels:sent.map(x=>x.sentiment),datasets:[{data:sent.map(x=>x.count)}]},options:{responsive:true}});
+new Chart(document.getElementById('rating'),{type:'bar',data:{labels:ratings.map(x=>x.rating+' ★'),datasets:[{label:'Reviews',data:ratings.map(x=>x.count)}]},options:{responsive:true}});
+new Chart(document.getElementById('products'),{type:'bar',data:{labels:products.map(x=>x.product),datasets:[{label:'Revenue ₹',data:products.map(x=>x.revenue)}]},options:{responsive:true,indexAxis:'y'}});
+</script>
+{% endblock %}

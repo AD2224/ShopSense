@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-5">
+  <div class="d-flex justify-content-between align-items-end mb-4">
+    <div><div class="eyebrow dark">SAVED PRODUCTS</div><h1 class="fw-bold">❤️ My Wishlist</h1><p class="text-muted mb-0">Products you have liked are saved here permanently to your account.</p></div>
+    <a href="/shop" class="btn btn-warning fw-bold">Continue Shopping</a>
+  </div>
+  {% if products %}
+  <div class="row g-4">
+    {% for p in products %}
+    <div class="col-sm-6 col-lg-3">
+      <div class="product-card">
+        <div class="product-visual"><span class="tag">{{ p.tag }}</span>{% if p.image %}<img class="product-image" src="{{ p.image }}" alt="{{ p.name }}" loading="lazy">{% else %}<div class="product-emoji">{{ p.icon }}</div>{% endif %}</div>
+        <div class="p-3 product-card-body">
+          <small class="text-muted">{{ p.category }}</small><h5 class="product-name">{{ p.name }}</h5>
+          <div class="product-meta"><b>Brand:</b> {{ p.brand }} <span>•</span> <b>Model:</b> {{ p.model }}</div>
+          <div class="color-options"><span class="color-label">Liked color:</span><span class="color-swatch" title="{{ p.selected_color }}" style="background:{% for color in p.colors %}{% if color.name == p.selected_color %}{{ color.hex }}{% endif %}{% endfor %}"></span> <b>{{ p.selected_color }}</b></div>
+          <div class="stars">★★★★★ <span>{{ p.rating }}</span></div><small class="text-muted">{{ p.reviews }} ratings</small>
+          <p class="product-desc">{{ p.description }}</p>
+          <div class="mt-auto"><div class="price">₹{{ '{:,}'.format(p.price) }}</div>
+            <div class="shop-actions mt-3"><form action="/like/{{ p.id }}" method="POST" class="flex-grow-1"><button class="btn btn-outline-danger w-100">❤️ Unlike</button></form><form action="/cart/add/{{ p.id }}" method="POST" class="flex-grow-1"><input type="hidden" name="color" value="{{ p.selected_color }}"><button class="btn btn-warning w-100 fw-bold">🛒 Add to Cart</button></form></div>
+            <a href="/product/{{ p.id }}" class="btn btn-dark w-100 mt-2">View Product</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+    <div class="empty-state"><div style="font-size:60px">♡</div><h3>Your Wishlist is empty</h3><p class="text-muted">Like products while shopping and they will stay saved in your Wishlist.</p><a href="/shop" class="btn btn-warning fw-bold">Explore Products</a></div>
+  {% endif %}
+</div>
+{% endblock %}

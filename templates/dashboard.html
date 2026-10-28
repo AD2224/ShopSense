@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>
+📊 My Dashboard
+</h1>
+
+<p>
+Welcome, {{ session.get("user_name") }}
+</p>
+
+
+<div class="row g-3 mt-3">
+
+<div class="col-md-6">
+<div class="stat-card">
+<h6>❤️ Wishlist</h6>
+<p class="text-muted mb-2">Your saved/liked products are stored permanently in your account.</p>
+<a href="/wishlist" class="btn btn-outline-danger btn-sm">Open Wishlist</a>
+</div>
+</div>
+
+<div class="col-md-6">
+<div class="stat-card">
+<h6>📦 Purchase History</h6>
+<p class="text-muted mb-2">View every confirmed purchase, quantity, amount and date.</p>
+<a href="/purchase-history" class="btn btn-outline-dark btn-sm">View Purchase History</a>
+</div>
+</div>
+
+
+
+<div class="col-md-3">
+
+<div class="stat-card">
+
+<h6>
+Total Reviews
+</h6>
+
+<h2>
+{{ statistics.total or 0 }}
+</h2>
+
+</div>
+
+</div>
+
+
+<div class="col-md-3">
+
+<div class="stat-card positive">
+
+<h6>
+Positive
+</h6>
+
+<h2>
+{{ statistics.positive or 0 }}
+</h2>
+
+</div>
+
+</div>
+
+
+<div class="col-md-3">
+
+<div class="stat-card neutral">
+
+<h6>
+Neutral
+</h6>
+
+<h2>
+{{ statistics.neutral or 0 }}
+</h2>
+
+</div>
+
+</div>
+
+
+<div class="col-md-3">
+
+<div class="stat-card negative">
+
+<h6>
+Negative
+</h6>
+
+<h2>
+{{ statistics.negative or 0 }}
+</h2>
+
+</div>
+
+</div>
+
+</div>
+
+
+<div class="card shadow mt-5 p-4">
+
+<h3>
+Recent Reviews
+</h3>
+
+
+<div class="table-responsive">
+
+<table class="table">
+
+<thead>
+
+<tr>
+
+<th>Product</th>
+<th>Review</th>
+<th>Sentiment</th>
+<th>Confidence</th>
+<th>Date</th>
+
+</tr>
+
+</thead>
+
+
+<tbody>
+
+{% for item in reviews %}
+
+<tr>
+
+<td>
+{{ item.product }}
+</td>
+
+<td>
+{{ item.review }}
+</td>
+
+<td>
+
+{% if item.sentiment == "positive" %}
+
+<span class="badge bg-success">
+😊 Positive
+</span>
+
+{% elif item.sentiment == "negative" %}
+
+<span class="badge bg-danger">
+😞 Negative
+</span>
+
+{% else %}
+
+<span class="badge bg-warning">
+😐 Neutral
+</span>
+
+{% endif %}
+
+</td>
+
+<td>
+{{ "%.2f"|format(item.confidence) }}%
+</td>
+
+<td>
+{{ item.created_at }}
+</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+
+<a
+href="/download-report"
+class="btn btn-success">
+
+⬇ Download CSV Report
+
+</a>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-5">
+  <div class="purchase-card mx-auto" style="max-width:850px">
+    <div class="eyebrow dark">SHOPSENSE REWARDS</div>
+    <h1 class="fw-bold">⚡ Confirm Purchase</h1>
+    <p class="text-muted">Demo checkout — no real payment is processed.</p>
+    <div class="alert alert-info d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div><b>🎁 Your rewards balance</b><br><small>Earn 1 point per ₹100 paid. First review of each purchased product earns 10 points.</small></div>
+      <span class="badge bg-primary fs-6">{{ reward_balance }} points</span>
+    </div>
+    {% for item in items %}
+      <div class="cart-item"><div class="cart-icon">{% if item.selected_image %}<img src="{{ item.selected_image }}" alt="{{ item.name }} - {{ item.selected_color }}" style="width:70px;height:70px;object-fit:contain;border-radius:10px" referrerpolicy="no-referrer">{% else %}{{ item.icon }}{% endif %}</div><div class="flex-grow-1"><b>{{ item.name }}</b><div class="product-meta">{{ item.brand }} · {{ item.model }}</div><div class="cart-color"><span class="color-swatch" style="background:{% for c in item.colors %}{% if c.name == item.selected_color %}{{ c.hex }}{% endif %}{% endfor %}"></span> Color: <b>{{ item.selected_color }}</b></div><div class="text-muted">Qty: {{ item.quantity }}</div></div><b>₹{{ '{:,.2f}'.format(item.subtotal) }}</b></div>
+    {% endfor %}
+    <hr>
+    <form method="POST">
+      <div class="form-check border rounded-3 p-3 ps-5 mb-3">
+        <input class="form-check-input" type="checkbox" name="use_points" value="yes" id="usePoints" {% if use_points %}checked{% endif %} {% if reward_balance <= 0 %}disabled{% endif %}>
+        <label class="form-check-label" for="usePoints"><b>🎁 Use my reward points</b><br><span class="text-muted">Use up to {{ [reward_balance, (subtotal * 0.20)|int]|min }} points (₹1 per point; maximum 20% of this cart).</span></label>
+      </div>
+      <div class="d-flex justify-content-between mb-2"><span>Subtotal</span><span>₹{{ '{:,.2f}'.format(subtotal) }}</span></div>
+      <div class="d-flex justify-content-between mb-2 text-success"><span>Rewards discount</span><b>− ₹{{ '{:,.2f}'.format(discount) }}</b></div>
+      <div class="d-flex justify-content-between fs-4 border-top pt-3"><b>Total to pay</b><b class="price">₹{{ '{:,.2f}'.format(payable) }}</b></div>
+      <p class="small text-muted mt-2">Estimated points earned from this purchase: <b>{{ estimated_points }}</b>. Points are added after the purchase is saved.</p>
+      <button class="btn btn-success btn-lg w-100 mt-3">✅ Confirm Purchase</button>
+      <a href="/cart" class="btn btn-outline-secondary w-100 mt-2">Back to Cart</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

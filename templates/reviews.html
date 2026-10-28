@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>
+📝 Review Management
+</h1>
+
+
+<form
+method="GET"
+class="row g-2 mb-4">
+
+
+<div class="col-md-6">
+
+<input
+type="text"
+name="search"
+value="{{ search }}"
+class="form-control"
+placeholder="Search product or review...">
+
+</div>
+
+
+<div class="col-md-3">
+
+<select
+name="sentiment"
+class="form-select">
+
+<option value="">
+All Sentiments
+</option>
+
+<option
+value="positive"
+{% if selected_sentiment == "positive" %}
+selected
+{% endif %}>
+
+Positive
+
+</option>
+
+<option
+value="neutral"
+{% if selected_sentiment == "neutral" %}
+selected
+{% endif %}>
+
+Neutral
+
+</option>
+
+<option
+value="negative"
+{% if selected_sentiment == "negative" %}
+selected
+{% endif %}>
+
+Negative
+
+</option>
+
+</select>
+
+</div>
+
+
+<div class="col-md-3">
+
+<button
+class="btn btn-primary">
+
+Search
+
+</button>
+
+<a
+href="/reviews"
+class="btn btn-secondary">
+
+Reset
+
+</a>
+
+</div>
+
+</form>
+
+
+<div class="card shadow p-3">
+
+<div class="table-responsive">
+
+<table class="table table-hover">
+
+<thead>
+
+<tr>
+
+<th>ID</th>
+<th>Product</th>
+<th>Review</th>
+<th>Sentiment</th>
+<th>Confidence</th>
+<th>Action</th>
+
+</tr>
+
+</thead>
+
+
+<tbody>
+
+{% for item in reviews %}
+
+<tr>
+
+<td>
+{{ item.id }}
+</td>
+
+<td>
+{{ item.product }}
+</td>
+
+<td>
+{{ item.review }}
+</td>
+
+<td>
+{{ item.sentiment }}
+</td>
+
+<td>
+{{ "%.2f"|format(item.confidence) }}%
+</td>
+
+<td>
+
+<form
+method="POST"
+action="/delete/{{ item.id }}"
+onsubmit="return confirm('Delete this review?');">
+
+<button
+class="btn btn-danger btn-sm">
+
+Delete
+
+</button>
+
+</form>
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-5"><div class="row justify-content-center"><div class="col-lg-8"><div class="result-card">
+  <div class="eyebrow dark">AI REVIEW ANALYSIS</div><h1 class="fw-bold">Analysis complete</h1><p class="text-muted">{{ product }}</p>
+  <div class="review-box">“{{ review }}”</div>
+  {% if points_awarded %}<div class="alert alert-success mt-3">🎁 You earned <b>{{ points_awarded }} reward points</b> for your first review of this product. Your new balance is <b>{{ reward_balance }} points</b>.</div>{% else %}<div class="alert alert-info mt-3">⭐ Review analysed! Reward points are awarded only for your first review of each purchased product. Your balance is <b>{{ reward_balance }} points</b>.</div>{% endif %}
+  {% if sentiment == "positive" %}<div class="result positive-result"><div class="result-face">😊</div><h2>Positive Customer Emotion</h2><p>The customer appears satisfied with the product.</p></div>
+  {% elif sentiment == "negative" %}<div class="result negative-result"><div class="result-face">😞</div><h2>Negative Customer Emotion</h2><p>The customer appears dissatisfied with the product.</p></div>
+  {% else %}<div class="result neutral-result"><div class="result-face">😐</div><h2>Neutral Customer Emotion</h2><p>The review expresses a neutral opinion.</p></div>{% endif %}
+  <div class="confidence-wrap"><div class="d-flex justify-content-between"><b>Model confidence</b><b>{{ confidence }}%</b></div><div class="progress mt-2" style="height:12px"><div class="progress-bar" style="width:{{ confidence }}%"></div></div></div>
+  {% if emotions %}<div class="mt-4 text-start"><h4>Current product emotion profile</h4><div class="row g-2 mt-1"><div class="col-4"><div class="emotion-box positive">😊 <b>{{ emotions.positive }}%</b><small>Positive</small></div></div><div class="col-4"><div class="emotion-box neutral">😐 <b>{{ emotions.neutral }}%</b><small>Neutral</small></div></div><div class="col-4"><div class="emotion-box negative">😞 <b>{{ emotions.negative }}%</b><small>Negative</small></div></div></div></div>{% endif %}
+  <div class="mt-4"><a href="/" class="btn btn-warning fw-bold me-2">Continue shopping</a><a href="/dashboard" class="btn btn-outline-dark">Dashboard</a></div>
+</div></div></div></div>
+{% endblock %}

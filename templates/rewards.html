@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-5">
+  <div class="row g-4 align-items-stretch mb-4">
+    <div class="col-lg-7"><div class="purchase-card h-100">
+      <div class="eyebrow dark">LOYALTY PROGRAM</div><h1 class="fw-bold">🎁 My Rewards</h1>
+      <p class="text-muted">Earn points as you shop and review products, then use them to reduce your next checkout total.</p>
+      <div class="display-4 fw-bold text-primary">{{ reward_balance }} <span class="fs-5">points</span></div>
+      <p class="mb-0">Current value: <b>₹{{ '{:,.2f}'.format(reward_balance) }}</b> before the checkout discount cap.</p>
+    </div></div>
+    <div class="col-lg-5"><div class="summary-card h-100"><h4>How to earn and redeem</h4><ul class="mt-3 mb-0">
+      <li class="mb-2">Purchase: <b>1 point per ₹100 paid</b>.</li>
+      <li class="mb-2">Review: <b>10 points</b> for your first review of each purchased product.</li>
+      <li class="mb-2">Redeem: <b>1 point = ₹1</b> discount.</li>
+      <li>Maximum redemption: <b>20% of cart subtotal</b> per purchase.</li>
+    </ul><a href="/shop" class="btn btn-warning fw-bold mt-4">Continue Shopping</a></div></div>
+  </div>
+  <h2 class="fw-bold mb-3">Rewards Activity</h2>
+  {% if transactions %}
+  <div class="table-responsive"><table class="table table-hover align-middle bg-white"><thead><tr><th>Date</th><th>Activity</th><th class="text-end">Points</th></tr></thead><tbody>
+    {% for tx in transactions %}<tr><td>{{ tx.created_at }}</td><td>{{ tx.reason }}</td><td class="text-end fw-bold {% if tx.points_change > 0 %}text-success{% else %}text-danger{% endif %}">{% if tx.points_change > 0 %}+{% endif %}{{ tx.points_change }}</td></tr>{% endfor %}
+  </tbody></table></div>
+  {% else %}<div class="empty-state"><div style="font-size:48px">🌟</div><h4>No rewards activity yet</h4><p class="text-muted">Make a purchase or submit your first product review to start earning points.</p><a href="/shop" class="btn btn-warning">Explore Products</a></div>{% endif %}
+</div>
+{% endblock %}

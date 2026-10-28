@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-5">
+  <div class="row g-5">
+    <div class="col-lg-5"><div class="product-detail-visual"><span class="tag">{{ product.tag }}</span>{% if product.image %}<div class="product-image-color-wrap"><img id="productDetailImage" class="product-detail-image" src="{{ product.image }}" alt="{{ product.name }}" referrerpolicy="no-referrer"></div>{% else %}<div>{{ product.icon }}</div>{% endif %}</div></div>
+    <div class="col-lg-7">
+      <small class="text-muted">{{ product.category }}</small><h1 class="fw-bold mt-1">{{ product.name }}</h1>
+      <div class="product-specs"><div><span>Brand</span><b>{{ product.brand }}</b></div><div><span>Model</span><b>{{ product.model }}</b></div></div>
+      <div class="product-colors">
+        <div class="color-title">Choose a color</div>
+        <div class="color-choice-list" role="radiogroup" aria-label="Choose product color">
+          {% for color in product.colors %}
+          <label class="color-choice {% if selected_color == color.name %}selected{% endif %}" title="Select {{ color.name }}">
+            <input type="radio" name="product_color" value="{{ color.name }}" data-hex="{{ color.hex }}" {% if selected_color == color.name %}checked{% endif %} form="add-to-cart-form">
+            <i class="color-swatch" style="background:{{ color.hex }}"></i>
+            <span>{{ color.name }}</span>
+          </label>
+          {% endfor %}
+        </div>
+        <div class="selected-color-text">Selected color: <b id="selectedColorName">{{ selected_color }}</b></div>
+      </div>
+      <div class="d-flex align-items-center gap-3 mt-3"><span class="stars big">★★★★★</span><b>{{ product.rating }} / 5</b><span class="text-muted">{{ product.reviews }} ratings</span></div>
+      <hr>
+      <div class="product-action-panel">
+        <form action="/like/{{ product.id }}" method="POST"><input type="hidden" name="color" id="likeColorInput" value="{{ selected_color }}"><button class="btn btn-outline-danger btn-lg">{{ '❤️ Liked' if liked else '♡ Like' }}</button></form>
+        <form id="add-to-cart-form" action="/cart/add/{{ product.id }}" method="POST"><input type="hidden" name="color" id="selectedColorInput" value="{{ selected_color }}"><button class="btn btn-warning btn-lg fw-bold">🛒 Add to Cart</button></form>
+        <a href="/cart" class="btn btn-outline-dark btn-lg">🛒 View Cart</a>
+        <a href="/purchase" class="btn btn-success btn-lg">⚡ Purchase</a>
+      </div>
+      <div class="price detail-price">₹{{ '{:,}'.format(product.price) }}</div><p class="lead mt-3">{{ product.description }}</p>
+      <div class="emotion-panel mt-4"><h4>🧠 AI Customer Emotion Rating</h4><p class="text-muted">Based on customer review sentiment analysis.</p>
+        <div class="row g-3"><div class="col-md-4"><div class="emotion-box positive">😊 <b>{{ emotions.positive }}%</b><small>Positive</small></div></div><div class="col-md-4"><div class="emotion-box neutral">😐 <b>{{ emotions.neutral }}%</b><small>Neutral</small></div></div><div class="col-md-4"><div class="emotion-box negative">😞 <b>{{ emotions.negative }}%</b><small>Negative</small></div></div></div>
+        <div class="progress mt-4" style="height:10px"><div class="progress-bar bg-success" style="width:{{ emotions.positive }}%"></div><div class="progress-bar bg-warning" style="width:{{ emotions.neutral }}%"></div><div class="progress-bar bg-danger" style="width:{{ emotions.negative }}%"></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="review-analyzer mt-5">
+    <div class="row align-items-center g-4"><div class="col-lg-5"><div class="eyebrow dark">MACHINE LEARNING</div><h2>Analyze a customer review</h2><p>Sign in and submit a review. The trained ML model will classify the customer's emotion and show its confidence.</p></div>
+      <div class="col-lg-7">{% if not session.get('user_id') %}<a href="/login" class="btn btn-dark">Sign in to review</a>{% elif not purchased %}<div class="alert alert-warning"><b>⭐ Review after purchase</b><br>Purchase this product first. Then you can give a star rating and write your emotion review.</div><a href="/cart" class="btn btn-success">🛒 Go to Cart & Purchase</a>{% else %}<form action="/predict" method="POST"><input type="hidden" name="product" value="{{ product.name }}"><label class="fw-bold mb-2">Your star rating</label><div class="star-picker mb-3">{% for n in range(1,6) %}<input type="radio" id="star{{n}}" name="rating" value="{{n}}" required><label for="star{{n}}">★</label>{% endfor %}</div><textarea name="review" class="form-control mb-3" rows="5" placeholder="Write your customer emotion review..." required></textarea><button class="btn btn-warning fw-bold px-4">🤖 Submit Review & Analyse Emotion</button></form>{% endif %}</div></div>
+  </div>
+</div>
+<style>
+.product-image-color-wrap{position:relative;display:flex;align-items:center;justify-content:center;width:100%;height:100%;min-height:420px;background:#fff;border-radius:18px;overflow:hidden;}
+.product-detail-image{width:100%;height:100%;max-height:520px;object-fit:contain;padding:18px;display:block;transition:opacity .15s ease;}
+</style>
+<script>
+const colorInput = document.getElementById('selectedColorInput');
+const colorName = document.getElementById('selectedColorName');
+const colorChoices = document.querySelectorAll('input[name="product_color"]');
+const productImage = document.getElementById('productDetailImage');
+const colorImages = {{ product.color_images|tojson }};
+const defaultImage = {{ product.image|tojson }};
+
+function changeProductImage(color){
+  if(!productImage) return;
+  const next = colorImages[color] || defaultImage;
+  productImage.style.opacity='0.25';
+  const test = new Image();
+  test.referrerPolicy='no-referrer';
+  test.onload=function(){
+    productImage.src=next;
+    productImage.style.opacity='1';
+  };
+  test.onerror=function(){
+    productImage.src=defaultImage;
+    productImage.style.opacity='1';
+  };
+  test.src=next;
+}
+
+colorChoices.forEach(function(input){
+  input.addEventListener('change',function(){
+    colorInput.value=this.value;
+    document.getElementById('likeColorInput').value=this.value;
+    colorName.textContent=this.value;
+    document.querySelectorAll('.color-choice').forEach(function(choice){choice.classList.remove('selected');});
+    this.closest('.color-choice').classList.add('selected');
+    changeProductImage(this.value);
+  });
+});
+
+const initiallySelected = document.querySelector('input[name="product_color"]:checked');
+if(initiallySelected){ changeProductImage(initiallySelected.value); }
+</script>
+{% endblock %}
